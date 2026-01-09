@@ -19,6 +19,8 @@ This project provides a Model Context Protocol (MCP) server that integrates the 
     
     ``` bash
     pip install uv
+    or
+    curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
 
 _Or follow the official installation guide for your platform._
