@@ -78,8 +78,7 @@ Update your Claude Desktop configuration to register the Woosmap MCP.
 2. Restart Claude Desktop
 
 Claude Desktop must be restarted for the MCP configuration to take effect.
-
-⸻
+---
 
 ### Usage
 
@@ -93,7 +92,7 @@ Once Claude Desktop is running:
 
 Claude will automatically invoke the Woosmap MCP and return nearby restaurants using the Woosmap Nearby API.
 
-⸻
+---
 
 ### Environment Variables
 |Variable| Description|
