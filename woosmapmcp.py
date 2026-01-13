@@ -8,7 +8,7 @@ import io
 from PIL import Image
 
 
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, Dict, List, Optional
 
 
 import httpx
@@ -101,7 +101,9 @@ async def get_places_nearby(
         "types": "|".join(place_type),
     }
     try:
-        data = await make_woosmap_request("localities/nearby", params)
+        data = await make_woosmap_request(
+            "localities/nearby", params
+        )  # fetching Woosmap Nearby Search API
         places = data.get("results", [])[:8]
 
         # # Build marker list
@@ -142,11 +144,6 @@ async def get_places_nearby(
 
         return {
             "content": [
-                # {
-                #     "type": "image",
-                #     "media_type": "image/png",
-                #     "data": places_image,
-                # },
                 {
                     "type": "text",
                     "text": "### Nearby \n\n" + "\n\n".join(lines),
@@ -162,6 +159,439 @@ async def get_places_nearby(
             "location": f"{latitude},{longitude}",
             "radius": radius,
             "types": place_type,
+        }
+
+
+@mcp.tool()
+async def get_place_details(
+    public_id: str,
+) -> Dict[str, Any]:
+    """
+    Get detailed information about a place using Woosmap Localities Details API.
+
+    Args:
+        public_id: Woosmap public_id of the place (returned by nearby/search APIs)
+    """
+
+    params = {
+        "public_id": public_id,
+    }
+
+    try:
+        data = await make_woosmap_request("localities/details", params)
+
+        result = data.get("result", {})
+        if not result:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"No details found for public_id `{public_id}`.",
+                    }
+                ]
+            }
+
+        # Build readable summary
+        lines = [
+            f"**Name:** {result.get('name', 'Unknown')}",
+            f"**Type:** {', '.join(result.get('types', []))}",
+            f"**Address:** {result.get('formatted_address', 'N/A')}",
+            f"**Country:** {result.get('country', 'N/A')}",
+        ]
+
+        if "geometry" in result:
+            location = result["geometry"].get("location", {})
+            lines.append(f"**Location:** {location.get('lat')}, {location.get('lng')}")
+
+        if "contact" in result:
+            contact = result["contact"]
+            if contact.get("phone"):
+                lines.append(f"**Phone:** {contact['phone']}")
+            if contact.get("website"):
+                lines.append(f"**Website:** {contact['website']}")
+
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": (
+                        "### Place Details\n\n" + "\n".join(lines) + "\n\n---\n\n"
+                        "**Raw response:**\n"
+                        f"{json.dumps(result, indent=2)}"
+                    ),
+                }
+            ]
+        }
+
+    except Exception as e:
+        logging.exception("Woosmap place details request failed")
+        return {
+            "error": str(e),
+            "public_id": public_id,
+        }
+
+
+@mcp.tool()
+async def autocomplete_then_details(
+    input: str,
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+    radius: Optional[int] = None,
+    types: Optional[List[str]] = None,
+    language: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Autocomplete a place/address and automatically fetch details
+    for the top prediction.
+
+    Args:
+        input: Text input (e.g. "Eiffel Tow").
+        latitude: Optional latitude for location biasing.
+        longitude: Optional longitude for location biasing.
+        radius: Optional radius (meters).
+        types: Optional list of place types.
+        language: Optional response language.
+    """
+
+    # -----------------------------
+    # Step 1: Autocomplete
+    # -----------------------------
+    autocomplete_params: Dict[str, Any] = {
+        "input": input,
+    }
+
+    if latitude is not None and longitude is not None:
+        autocomplete_params["location"] = f"{latitude},{longitude}"
+
+    if radius is not None:
+        autocomplete_params["radius"] = radius
+
+    if types:
+        autocomplete_params["types"] = "|".join(types)
+
+    if language:
+        autocomplete_params["language"] = language
+
+    try:
+        autocomplete_data = await make_woosmap_request(
+            "localities/autocomplete",
+            autocomplete_params,
+        )
+
+        predictions = autocomplete_data.get("predictions", [])
+        if not predictions:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"No autocomplete results for `{input}`.",
+                    }
+                ]
+            }
+
+        top_prediction = predictions[0]
+        public_id = top_prediction.get("public_id")
+
+        if not public_id:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Top autocomplete result has no public_id.",
+                    }
+                ]
+            }
+
+        # -----------------------------
+        # Step 2: Details
+        # -----------------------------
+        details_data = await make_woosmap_request(
+            "localities/details",
+            {"public_id": public_id},
+        )
+
+        result = details_data.get("result", {})
+        if not result:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"No details found for public_id `{public_id}`.",
+                    }
+                ]
+            }
+
+        # -----------------------------
+        # Build response
+        # -----------------------------
+        lines = [
+            f"**Selected prediction:** {top_prediction.get('description', 'Unknown')}",
+            f"**public_id:** `{public_id}`",
+            "",
+            "### Place Details",
+            f"**Name:** {result.get('name', 'Unknown')}",
+            f"**Address:** {result.get('formatted_address', 'N/A')}",
+            f"**Types:** {', '.join(result.get('types', []))}",
+        ]
+
+        if "geometry" in result:
+            loc = result["geometry"].get("location", {})
+            lines.append(f"**Location:** {loc.get('lat')}, {loc.get('lng')}")
+
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": (
+                        "\n".join(lines) + "\n\n---\n\n"
+                        "**Raw details:**\n"
+                        f"{json.dumps(result, indent=2)}"
+                    ),
+                }
+            ]
+        }
+
+    except Exception as e:
+        logging.exception("Autocomplete → Details chain failed")
+        return {
+            "error": str(e),
+            "input": input,
+        }
+
+
+@mcp.tool()
+async def autocomplete_localities(
+    input: str,
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+    radius: Optional[int] = None,
+    types: Optional[List[str]] = None,
+    language: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Get place and address suggestions using Woosmap Localities Autocomplete API.
+
+    Args:
+        input: Text input from the user (e.g. "Eiffel To").
+        latitude: Optional latitude for location biasing.
+        longitude: Optional longitude for location biasing.
+        radius: Optional radius (meters) for location biasing.
+        types: Optional list of place types to filter results.
+        language: Optional response language (ISO code, e.g. "en", "fr").
+    """
+
+    params: Dict[str, Any] = {
+        "input": input,
+    }
+
+    if latitude is not None and longitude is not None:
+        params["location"] = f"{latitude},{longitude}"
+
+    if radius is not None:
+        params["radius"] = radius
+
+    if types:
+        params["types"] = "|".join(types)
+
+    if language:
+        params["language"] = language
+
+    try:
+        data = await make_woosmap_request("localities/autocomplete", params)
+        predictions = data.get("predictions", [])[:8]
+
+        lines = []
+        for i, p in enumerate(predictions, 1):
+            lines.append(
+                f"{i}. **{p.get('description', 'Unknown')}**\n"
+                f"   Type: {', '.join(p.get('types', []))}\n"
+                f"   public_id: `{p.get('public_id', 'N/A')}`\n"
+                f"   Raw: {json.dumps(p, separators=(',', ':'))}"
+            )
+
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": (
+                        "### Autocomplete Suggestions\n\n" + "\n\n".join(lines)
+                        if lines
+                        else "No autocomplete suggestions found."
+                    ),
+                }
+            ]
+        }
+
+    except Exception as e:
+        logging.exception("Woosmap autocomplete request failed")
+        return {
+            "error": str(e),
+            "input": input,
+            "types": types,
+        }
+
+
+@mcp.tool()
+async def geocode_locality(
+    address: str,
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+    radius: Optional[int] = None,
+    language: Optional[str] = None,
+    components: Optional[str] = None,
+    bounds: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Geocode an address or place name using Woosmap Localities Geocode API.
+
+    Args:
+        address: Address or place name to geocode.
+        latitude: Optional latitude for location biasing.
+        longitude: Optional longitude for location biasing.
+        radius: Optional radius (meters) for location biasing.
+        language: Optional response language (ISO code, e.g. "en").
+        components: Optional component filters (e.g. "country:IN").
+        bounds: Optional bounding box bias
+                Format: "sw_lat,sw_lng|ne_lat,ne_lng"
+    """
+
+    params: Dict[str, Any] = {
+        "address": address,
+    }
+
+    if latitude is not None and longitude is not None:
+        params["location"] = f"{latitude},{longitude}"
+
+    if radius is not None:
+        params["radius"] = radius
+
+    if language:
+        params["language"] = language
+
+    if components:
+        params["components"] = components
+
+    if bounds:
+        params["bounds"] = bounds
+
+    try:
+        data = await make_woosmap_request("localities/geocode", params)
+        results = data.get("results", [])[:5]
+
+        if not results:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"No geocoding results found for `{address}`.",
+                    }
+                ]
+            }
+
+        lines = []
+        for i, r in enumerate(results, 1):
+            location = r.get("geometry", {}).get("location", {})
+            lines.append(
+                f"{i}. **{r.get('formatted_address', 'Unknown')}**\n"
+                f"   Lat/Lng: {location.get('lat')}, {location.get('lng')}\n"
+                f"   Types: {', '.join(r.get('types', []))}\n"
+                f"   public_id: `{r.get('public_id', 'N/A')}`\n"
+                f"   Raw: {json.dumps(r, separators=(',', ':'))}"
+            )
+
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "### Geocode Results\n\n" + "\n\n".join(lines),
+                }
+            ]
+        }
+
+    except Exception as e:
+        logging.exception("Woosmap geocode request failed")
+        return {
+            "error": str(e),
+            "address": address,
+            "components": components,
+            "bounds": bounds,
+        }
+
+
+@mcp.tool()
+async def reverse_geocode_locality(
+    latitude: float,
+    longitude: float,
+    language: Optional[str] = None,
+    components: Optional[str] = None,
+    bounds: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Reverse geocode coordinates to an address using Woosmap Localities Geocode API.
+
+    Args:
+        latitude: Latitude of the location.
+        longitude: Longitude of the location.
+        language: Optional response language (ISO code, e.g. "en").
+        components: Optional component filters (e.g. "country:IN").
+        bounds: Optional bounding box bias
+                Format: "sw_lat,sw_lng|ne_lat,ne_lng"
+    """
+
+    params: Dict[str, Any] = {
+        "latlng": f"{latitude},{longitude}",
+    }
+
+    if language:
+        params["language"] = language
+
+    if components:
+        params["components"] = components
+
+    if bounds:
+        params["bounds"] = bounds
+
+    try:
+        data = await make_woosmap_request("localities/geocode", params)
+        results = data.get("results", [])[:5]
+
+        if not results:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"No reverse-geocoding results for `{latitude},{longitude}`.",
+                    }
+                ]
+            }
+
+        lines = []
+        for i, r in enumerate(results, 1):
+            location = r.get("geometry", {}).get("location", {})
+            lines.append(
+                f"{i}. **{r.get('formatted_address', 'Unknown')}**\n"
+                f"   Lat/Lng: {location.get('lat')}, {location.get('lng')}\n"
+                f"   Types: {', '.join(r.get('types', []))}\n"
+                f"   public_id: `{r.get('public_id', 'N/A')}`\n"
+                f"   Raw: {json.dumps(r, separators=(',', ':'))}"
+            )
+
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "### Reverse Geocode Results\n\n" + "\n\n".join(lines),
+                }
+            ]
+        }
+
+    except Exception as e:
+        logging.exception("Woosmap reverse geocode request failed")
+        return {
+            "error": str(e),
+            "latlng": f"{latitude},{longitude}",
+            "components": components,
+            "bounds": bounds,
         }
 
 
