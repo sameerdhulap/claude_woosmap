@@ -158,8 +158,9 @@ async def get_place_details(
 @mcp.tool()
 async def autocomplete_then_details(
     input: str,
-    latitude: Optional[float] = None,
-    longitude: Optional[float] = None,
+    latitude: float,
+    longitude: float,
+    components: list[str],
     radius: Optional[int] = None,
     types: Optional[List[str]] = None,
     language: Optional[str] = None,
@@ -170,8 +171,9 @@ async def autocomplete_then_details(
 
     Args:
         input: Text input (e.g. "Eiffel Tow").
-        latitude: Optional latitude for location biasing.
-        longitude: Optional longitude for location biasing.
+        latitude: latitude for location biasing.
+        longitude: longitude for location biasing.
+        components: country code in ISO_3166-1 format  (e.g. "IN","FR","US").
         radius: Optional radius (meters).
         types: Optional list of place types.
         language: Optional response language.
@@ -193,6 +195,9 @@ async def autocomplete_then_details(
     if types:
         autocomplete_params["types"] = "|".join(types)
 
+    if components:
+        autocomplete_params["components"] = "|".join(f"country:{c}" for c in components)
+
     if language:
         autocomplete_params["language"] = language
 
@@ -202,7 +207,7 @@ async def autocomplete_then_details(
             autocomplete_params,
         )
 
-        predictions = autocomplete_data.get("predictions", [])
+        predictions = autocomplete_data.get("localities", [])
         if not predictions:
             return {
                 "content": [
@@ -286,8 +291,9 @@ async def autocomplete_then_details(
 @mcp.tool()
 async def autocomplete_localities(
     input: str,
-    latitude: Optional[float] = None,
-    longitude: Optional[float] = None,
+    latitude: float,
+    longitude: float,
+    components: list[str],
     radius: Optional[int] = None,
     types: Optional[List[str]] = None,
     language: Optional[str] = None,
@@ -297,8 +303,9 @@ async def autocomplete_localities(
 
     Args:
         input: Text input from the user (e.g. "Eiffel To").
-        latitude: Optional latitude for location biasing.
-        longitude: Optional longitude for location biasing.
+        latitude: latitude for location biasing.
+        longitude: longitude for location biasing.
+        components: country code in ISO_3166-1 format  (e.g. "IN","FR","US").
         radius: Optional radius (meters) for location biasing.
         types: Optional list of place types to filter results.
         language: Optional response language (ISO code, e.g. "en", "fr").
@@ -310,6 +317,9 @@ async def autocomplete_localities(
 
     if latitude is not None and longitude is not None:
         params["location"] = f"{latitude},{longitude}"
+
+    if components:
+        params["components"] = "|".join(f"country:{c}" for c in components)
 
     if radius is not None:
         params["radius"] = radius
