@@ -29,7 +29,7 @@ _Or follow the official installation guide for your platform._
 
 2. Clone or place the MCP code locally
 
-    Make sure your MCP script (e.g. woosmapmcp.py) and dependencies are available in a local directory.
+    Make sure your MCP script (e.g. main.py) and dependencies are available in a local directory.
 
     ##### Example:
     ``` text
@@ -43,7 +43,7 @@ _Or follow the official installation guide for your platform._
 3. Download dependencies and verify the MCP runs correctly:
     ```sh
     uv sync
-    uv run woosmapmcp.py
+    uv run main.py
     ```
 
 ---
@@ -61,7 +61,7 @@ Update your Claude Desktop configuration to register the Woosmap MCP.
       "--directory",
       "<<Location of code>>",
       "run",
-      "woosmapmcp.py"
+      "main.py"
     ],
     "env": {
       "PYTHONUNBUFFERED": "1",
@@ -89,7 +89,7 @@ Once Claude Desktop is running:
 2.	Ask a natural language query, for example:
     
     ```text
-    Find restaurant near Seattle
+    Find a restaurant near Seattle
     ```
 
 Claude will automatically invoke the Woosmap MCP and return nearby restaurants using the Woosmap Nearby API.
@@ -115,7 +115,7 @@ tail -f ~/Library/Logs/Claude/mcp.log
 Before using Claude, verify the MCP runs correctly:
 ```sh
 uv sync
-uv run woosmapmcp.py
+uv run main.py
 ```
 
 If this fails, Claude will not be able to load the MCP.
