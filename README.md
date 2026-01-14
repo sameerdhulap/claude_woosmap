@@ -34,7 +34,7 @@ _Or follow the official installation guide for your platform._
     ##### Example:
     ``` text
         woosmap-mcp/
-        ├── woosmapmcp.py
+        ├── main.py
         ├── pyproject.toml
         └── README.md
     ```
