@@ -10,9 +10,9 @@ logger = logging.getLogger(__name__)
 async def get_transit_route(
     origin: str,
     destination: str,
+    language: str,
     departure_time: Optional[str] = None,
     arrival_time: Optional[str] = None,
-    language: Optional[str] = None,
     units: Optional[str] = None,
     transit_modes: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
@@ -23,8 +23,8 @@ async def get_transit_route(
         origin: "lat,lng" of the start point.
         destination: "lat,lng" of the end point.
         departure_time: "now" or timestamp (ISO or Unix).
-        arrival_time: Timestamp for arrival-based routing.
-        language: Response language (ISO code).
+        arrival_time: Timestamp for arrival-based routing (ISO or Unix).
+        language: Request language (ISO code).
         units: "metric" or "imperial".
         transit_modes: Allowed transit modes
             (e.g. ["bus","subway","train","tram","rail"]).
