@@ -55,20 +55,22 @@ _Or follow the official installation guide for your platform._
 Update your Claude Desktop configuration to register the Woosmap MCP.
 ```json
 {
-  "WoosmapMcp": {
-    "command": "/Users/saturn/.local/bin/uv",
-    "args": [
-      "--directory",
-      "<<Location of code>>",
-      "run",
-      "main.py"
-    ],
-    "env": {
-      "PYTHONUNBUFFERED": "1",
-      "MCP_DEBUG": "1",
-      "WOOSMAP_API_KEY": "<<Your Woosmap Key>>"
-    }
-  }
+  "mcpServers": {
+	  "WoosmapMcp": {
+	    "command": "/Users/saturn/.local/bin/uv",
+	    "args": [
+	      "--directory",
+	      "<<Location of code>>",
+	      "run",
+	      "main.py"
+	    ],
+	    "env": {
+	      "PYTHONUNBUFFERED": "1",
+	      "MCP_DEBUG": "1",
+	      "WOOSMAP_API_KEY": "<<Your Woosmap Key>>"
+	    }
+	  }
+	}
 }
 ```
 
