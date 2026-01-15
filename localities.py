@@ -161,9 +161,9 @@ async def autocomplete_then_details(
     latitude: float,
     longitude: float,
     components: list[str],
+    language: str,
     radius: Optional[int] = None,
     types: Optional[List[str]] = None,
-    language: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Autocomplete a place/address and automatically fetch details
@@ -174,9 +174,10 @@ async def autocomplete_then_details(
         latitude: latitude for location biasing.
         longitude: longitude for location biasing.
         components: country code in ISO_3166-1 format  (e.g. "IN","FR","US").
+        language: request language, The language code, using ISO 639-2 Alpha-2 country codes. (e.g. "en", "fr", "nl").
         radius: Optional radius (meters).
         types: Optional list of place types.
-        language: Optional response language.
+
     """
 
     # -----------------------------

@@ -53,6 +53,7 @@ _Or follow the official installation guide for your platform._
 1. Edit claude_desktop_config.json
 
 Update your Claude Desktop configuration to register the Woosmap MCP.
+
 ```json
 {
   "mcpServers": {
