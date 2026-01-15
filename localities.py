@@ -89,16 +89,19 @@ async def get_places_nearby(
 @mcp.tool()
 async def get_place_details(
     public_id: str,
+    language: str,
 ) -> Dict[str, Any]:
     """
     Get detailed information about a place using Woosmap Localities Details API.
 
     Args:
         public_id: Woosmap public_id of the place (returned by nearby/search APIs)
+        language: request language, The language code, using ISO 639-2 Alpha-2 country codes. (e.g. "en", "fr", "nl").
     """
 
     params = {
         "public_id": public_id,
+        "language": language,
     }
 
     try:
@@ -161,9 +164,9 @@ async def autocomplete_then_details(
     latitude: float,
     longitude: float,
     components: list[str],
+    language: str,
     radius: Optional[int] = None,
     types: Optional[List[str]] = None,
-    language: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Autocomplete a place/address and automatically fetch details
@@ -174,9 +177,10 @@ async def autocomplete_then_details(
         latitude: latitude for location biasing.
         longitude: longitude for location biasing.
         components: country code in ISO_3166-1 format  (e.g. "IN","FR","US").
+        language: request language, The language code, using ISO 639-2 Alpha-2 country codes. (e.g. "en", "fr", "nl").
         radius: Optional radius (meters).
         types: Optional list of place types.
-        language: Optional response language.
+
     """
 
     # -----------------------------
@@ -294,9 +298,9 @@ async def autocomplete_localities(
     latitude: float,
     longitude: float,
     components: list[str],
+    language: str,
     radius: Optional[int] = None,
     types: Optional[List[str]] = None,
-    language: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Get place and address suggestions using Woosmap Localities Autocomplete API.
@@ -306,9 +310,10 @@ async def autocomplete_localities(
         latitude: latitude for location biasing.
         longitude: longitude for location biasing.
         components: country code in ISO_3166-1 format  (e.g. "IN","FR","US").
+        language: request language (ISO code, e.g. "en", "fr").
         radius: Optional radius (meters) for location biasing.
         types: Optional list of place types to filter results.
-        language: Optional response language (ISO code, e.g. "en", "fr").
+
     """
 
     params: Dict[str, Any] = {
@@ -332,7 +337,7 @@ async def autocomplete_localities(
 
     try:
         data = await make_woosmap_request("localities/autocomplete", params)
-        predictions = data.get("predictions", [])[:8]
+        predictions = data.get("localities", [])[:8]
 
         lines = []
         for i, p in enumerate(predictions, 1):
@@ -368,10 +373,10 @@ async def autocomplete_localities(
 @mcp.tool()
 async def geocode_locality(
     address: str,
+    language: str,
     latitude: Optional[float] = None,
     longitude: Optional[float] = None,
     radius: Optional[int] = None,
-    language: Optional[str] = None,
     components: Optional[str] = None,
     bounds: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -383,7 +388,7 @@ async def geocode_locality(
         latitude: Optional latitude for location biasing.
         longitude: Optional longitude for location biasing.
         radius: Optional radius (meters) for location biasing.
-        language: Optional response language (ISO code, e.g. "en").
+        language: Request language (ISO code, e.g. "en").
         components: Optional component filters (e.g. "country:IN").
         bounds: Optional bounding box bias
                 Format: "sw_lat,sw_lng|ne_lat,ne_lng"
@@ -456,7 +461,7 @@ async def geocode_locality(
 async def reverse_geocode_locality(
     latitude: float,
     longitude: float,
-    language: Optional[str] = None,
+    language: str,
     components: Optional[str] = None,
     bounds: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -466,7 +471,7 @@ async def reverse_geocode_locality(
     Args:
         latitude: Latitude of the location.
         longitude: Longitude of the location.
-        language: Optional response language (ISO code, e.g. "en").
+        language: Request language (ISO code, e.g. "en").
         components: Optional component filters (e.g. "country:IN").
         bounds: Optional bounding box bias
                 Format: "sw_lat,sw_lng|ne_lat,ne_lng"

@@ -57,3 +57,13 @@ async def make_woosmap_request(endpoint: str, params: dict[str, Any]) -> dict[st
         except Exception:
             logger.exception("Woosmap API request failed")
             return {}
+
+
+@mcp.tool()
+async def health_check():
+    """
+    Check the health of the service.
+    Returns:
+        _type_: _description_
+    """
+    return {"result": {"status": "ok"}}

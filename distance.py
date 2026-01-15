@@ -141,9 +141,9 @@ async def get_route_distance(
 async def get_distance_matrix(
     origins: List[str],
     destinations: List[str],
+    language: str,
     mode: Optional[str] = None,
     units: Optional[str] = None,
-    language: Optional[str] = None,
     departure_time: Optional[str] = None,
     avoid: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -155,7 +155,7 @@ async def get_distance_matrix(
         destinations: List of "lat,lng" destination points.
         mode: Travel mode ("driving", "walking", "cycling").
         units: "metric" or "imperial".
-        language: Response language (ISO code).
+        language: Request language (ISO code).
         departure_time: "now" or timestamp for traffic-aware durations.
         avoid: Routing constraints (e.g. "tolls", "highways").
     """
