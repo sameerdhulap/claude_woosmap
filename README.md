@@ -56,7 +56,7 @@ Contains packaged `.skill` files ready for distribution to end users.
 1. **Set up the MCP server**:
    ```bash
    cd woosmap
-   pip install -r requirements.txt
+   pip install -r requirements.txt or uv sync
    # Configure your Woosmap API key
    ```
 
