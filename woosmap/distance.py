@@ -3,8 +3,22 @@ from typing import Any, Dict, List, Optional
 import logging
 
 from core import mcp, make_woosmap_request
+from exceptions import WoosmapError
 
 logger = logging.getLogger(__name__)
+
+
+def _error_response(error: WoosmapError, context: dict[str, Any]) -> dict[str, Any]:
+    """Format a WoosmapError into a proper MCP response."""
+    return {
+        "content": [
+            {
+                "type": "text",
+                "text": f"### Error\n\n**{error.__class__.__name__}**: {error.message}\n\n"
+                f"**Details:** {json.dumps({**error.details, **context}, indent=2)}",
+            }
+        ]
+    }
 
 
 @mcp.tool()
@@ -128,13 +142,12 @@ async def get_route_distance(
             ]
         }
 
-    except Exception as e:
-        logging.exception("Route distance request failed")
-        return {
-            "error": str(e),
+    except WoosmapError as e:
+        logger.error(f"Route distance request failed: {e.message}")
+        return _error_response(e, {
             "origin": origin,
             "destination": destination,
-        }
+        })
 
 
 @mcp.tool()
@@ -224,13 +237,12 @@ async def get_distance_matrix(
             ]
         }
 
-    except Exception as e:
-        logging.exception("Distance matrix request failed")
-        return {
-            "error": str(e),
+    except WoosmapError as e:
+        logger.error(f"Distance matrix request failed: {e.message}")
+        return _error_response(e, {
             "origins": origins,
             "destinations": destinations,
-        }
+        })
 
 
 @mcp.tool()
@@ -341,10 +353,9 @@ async def get_route_tolls(
             ]
         }
 
-    except Exception as e:
-        logging.exception("Tolls request failed")
-        return {
-            "error": str(e),
+    except WoosmapError as e:
+        logger.error(f"Tolls request failed: {e.message}")
+        return _error_response(e, {
             "origin": origin,
             "destination": destination,
-        }
+        })

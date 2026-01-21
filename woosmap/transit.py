@@ -1,9 +1,24 @@
 import json
 from typing import Any, Dict, List, Optional
 import logging
+
 from core import mcp, make_woosmap_request
+from exceptions import WoosmapError
 
 logger = logging.getLogger(__name__)
+
+
+def _error_response(error: WoosmapError, context: dict[str, Any]) -> dict[str, Any]:
+    """Format a WoosmapError into a proper MCP response."""
+    return {
+        "content": [
+            {
+                "type": "text",
+                "text": f"### Error\n\n**{error.__class__.__name__}**: {error.message}\n\n"
+                f"**Details:** {json.dumps({**error.details, **context}, indent=2)}",
+            }
+        ]
+    }
 
 
 @mcp.tool()
@@ -115,10 +130,9 @@ async def get_transit_route(
             ]
         }
 
-    except Exception as e:
-        logging.exception("Transit route request failed")
-        return {
-            "error": str(e),
+    except WoosmapError as e:
+        logger.error(f"Transit route request failed: {e.message}")
+        return _error_response(e, {
             "origin": origin,
             "destination": destination,
-        }
+        })

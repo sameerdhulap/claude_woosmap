@@ -3,7 +3,7 @@ name = "woosmap"
 version = "0.1.0"
 description = "Use Woosmap server to add location intelligence capabilities"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 dependencies = [
     "debugpy>=1.8.19",
     "httpx>=0.28.1",

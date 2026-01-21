@@ -3,8 +3,22 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from core import mcp, make_woosmap_request
+from exceptions import WoosmapError
 
 logger = logging.getLogger(__name__)
+
+
+def _error_response(error: WoosmapError, context: dict[str, Any]) -> dict[str, Any]:
+    """Format a WoosmapError into a proper MCP response."""
+    return {
+        "content": [
+            {
+                "type": "text",
+                "text": f"### Error\n\n**{error.__class__.__name__}**: {error.message}\n\n"
+                f"**Details:** {json.dumps({**error.details, **context}, indent=2)}",
+            }
+        ]
+    }
 
 
 @mcp.tool()
@@ -76,14 +90,13 @@ async def get_places_nearby(
         }
 
         # return places
-    except Exception as e:
-        logging.exception("Woosmap nearby search failed")
-        return {
-            "error": str(e),
+    except WoosmapError as e:
+        logger.error(f"Woosmap nearby search failed: {e.message}")
+        return _error_response(e, {
             "location": f"{latitude},{longitude}",
             "radius": radius,
             "types": place_type,
-        }
+        })
 
 
 @mcp.tool()
@@ -150,12 +163,9 @@ async def get_place_details(
             ]
         }
 
-    except Exception as e:
-        logging.exception("Woosmap place details request failed")
-        return {
-            "error": str(e),
-            "public_id": public_id,
-        }
+    except WoosmapError as e:
+        logger.error(f"Woosmap place details request failed: {e.message}")
+        return _error_response(e, {"public_id": public_id})
 
 
 @mcp.tool()
@@ -284,12 +294,9 @@ async def autocomplete_then_details(
             ]
         }
 
-    except Exception as e:
-        logging.exception("Autocomplete → Details chain failed")
-        return {
-            "error": str(e),
-            "input": input,
-        }
+    except WoosmapError as e:
+        logger.error(f"Autocomplete → Details chain failed: {e.message}")
+        return _error_response(e, {"input": input})
 
 
 @mcp.tool()
@@ -361,13 +368,9 @@ async def autocomplete_localities(
             ]
         }
 
-    except Exception as e:
-        logging.exception("Woosmap autocomplete request failed")
-        return {
-            "error": str(e),
-            "input": input,
-            "types": types,
-        }
+    except WoosmapError as e:
+        logger.error(f"Woosmap autocomplete request failed: {e.message}")
+        return _error_response(e, {"input": input, "types": types})
 
 
 @mcp.tool()
@@ -447,14 +450,13 @@ async def geocode_locality(
             ]
         }
 
-    except Exception as e:
-        logging.exception("Woosmap geocode request failed")
-        return {
-            "error": str(e),
+    except WoosmapError as e:
+        logger.error(f"Woosmap geocode request failed: {e.message}")
+        return _error_response(e, {
             "address": address,
             "components": components,
             "bounds": bounds,
-        }
+        })
 
 
 @mcp.tool()
@@ -524,11 +526,10 @@ async def reverse_geocode_locality(
             ]
         }
 
-    except Exception as e:
-        logging.exception("Woosmap reverse geocode request failed")
-        return {
-            "error": str(e),
+    except WoosmapError as e:
+        logger.error(f"Woosmap reverse geocode request failed: {e.message}")
+        return _error_response(e, {
             "latlng": f"{latitude},{longitude}",
             "components": components,
             "bounds": bounds,
-        }
+        })

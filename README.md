@@ -1,151 +1,138 @@
-## Woosmap MCP for Claude Desktop
+# Claude Woosmap Project
 
-This project provides a Model Context Protocol (MCP) server that integrates the Woosmap Nearby / Localities API with Claude Desktop, enabling Claude to find nearby places such as restaurants, businesses, and points of interest.
+This repository contains the Woosmap MCP server and Claude skill for geolocation and mapping services.
 
----
+## Folder Structure
 
-### Prerequisites
-	
-- Claude Desktop (macOS)
-- Python 3.9+
-- uv package manager
-- A valid Woosmap API key
-
----
-
-#### Installation
-
-1. Install uv (if not already installed)
-    
-    ``` bash
-    pip install uv
-    or
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    ```
-
-_Or follow the official installation guide for your platform._
-
----
-
-2. Clone or place the MCP code locally
-
-    Make sure your MCP script (e.g. main.py) and dependencies are available in a local directory.
-
-    ##### Example:
-    ``` text
-        woosmap-mcp/
-        ├── main.py
-        ├── pyproject.toml
-        └── README.md
-    ```
-
----
-3. Download dependencies and verify the MCP runs correctly:
-    ```sh
-    uv sync
-    uv run main.py
-    ```
-
----
-
-#### Configure Claude Desktop
-
-1. Edit claude_desktop_config.json
-
-Update your Claude Desktop configuration to register the Woosmap MCP.
-
-```json
-{
-  "mcpServers": {
-	  "WoosmapMcp": {
-	    "command": "/Users/saturn/.local/bin/uv",
-	    "args": [
-	      "--directory",
-	      "<<Location of code>>",
-	      "run",
-	      "main.py"
-	    ],
-	    "env": {
-	      "PYTHONUNBUFFERED": "1",
-	      "MCP_DEBUG": "1",
-	      "WOOSMAP_API_KEY": "<<Your Woosmap Key>>"
-	    }
-	  }
-	}
-}
+```
+claude/
+├── woosmap/                    # Woosmap MCP Server
+│   ├── server.py              # MCP server implementation
+│   ├── requirements.txt       # Python dependencies
+│   └── ...                    # Other server files
+│
+├── woosmap-skill/             # Skill Development Folder
+│   ├── SKILL.md              # Main skill instructions for Claude
+│   └── README.md             # Development documentation
+│
+└── skills-dist/               # Packaged Skills for Distribution
+    ├── woosmap.skill         # Distributable skill package
+    └── README.md             # Installation instructions
 ```
 
-📍 Config file location (macOS):
-```text
-~/Library/Application Support/Claude/claude_desktop_config.json
+## Components
+
+### 1. Woosmap MCP Server (`woosmap/`)
+The Model Context Protocol (MCP) server that connects to the Woosmap API and provides tools for:
+- Place search and autocomplete
+- Geocoding and reverse geocoding
+- Route calculation and navigation
+- Distance matrix computation
+- Toll cost calculation
+- Public transit routing
+
+**Setup**: See `woosmap/README.md` for installation and configuration.
+
+### 2. Woosmap Skill (`woosmap-skill/`)
+Development folder for the Claude skill that teaches Claude when and how to use the Woosmap MCP tools effectively.
+
+**Purpose**: Provides Claude with:
+- Triggering logic (when to use Woosmap)
+- Workflow guidance (how to chain API calls)
+- Parameter best practices
+- Common usage patterns
+
+**Development**: See `woosmap-skill/README.md` for editing and testing.
+
+### 3. Distribution (`skills-dist/`)
+Contains packaged `.skill` files ready for distribution to end users.
+
+**Usage**: See `skills-dist/README.md` for installation instructions.
+
+## Quick Start
+
+### For Developers
+
+1. **Set up the MCP server**:
+   ```bash
+   cd woosmap
+   pip install -r requirements.txt
+   # Configure your Woosmap API key
+   ```
+
+2. **Edit the skill** (optional):
+   ```bash
+   cd woosmap-skill
+   # Edit SKILL.md as needed
+   ```
+
+3. **Package the skill**:
+   ```bash
+   python3 /path/to/skill-creator/scripts/package_skill.py woosmap-skill skills-dist
+   ```
+
+### For End Users
+
+1. **Install the MCP server** (follow woosmap/ documentation)
+2. **Install the skill**:
+   ```bash
+   unzip skills-dist/woosmap.skill -d ~/.claude/skills/
+   ```
+3. **Configure Claude** to use both MCP and skill
+
+## How It Works
+
+```
+User Query: "Find coffee shops near me"
+      ↓
+Claude reads the skill (woosmap-skill/SKILL.md)
+      ↓
+Claude knows to use: autocomplete_localities
+      ↓
+Claude calls the MCP server (woosmap/)
+      ↓
+MCP server queries Woosmap API
+      ↓
+Results returned to Claude
+      ↓
+Claude formats response for user
 ```
 
-2. Restart Claude Desktop
+## Requirements
 
-Claude Desktop must be restarted for the MCP configuration to take effect.
----
+- **Python 3.8+** for MCP server
+- **Woosmap API Key** (get from https://developers.woosmap.com/)
+- **Claude** (Sonnet 4.5 or later recommended)
+- **MCP-compatible Claude interface** (Claude.ai, API, etc.)
 
-### Usage
+## Development Workflow
 
-Once Claude Desktop is running:
-1.	Open a new chat in Claude
-2.	Ask a natural language query, for example:
-    
-    ```text
-    Find a restaurant near Seattle
-    ```
+1. **Develop**: Edit files in `woosmap-skill/`
+2. **Test**: Use Claude to test the skill with real queries
+3. **Package**: Create `.skill` file in `skills-dist/`
+4. **Distribute**: Share the `.skill` file
 
-Claude will automatically invoke the Woosmap MCP and return nearby restaurants using the Woosmap Nearby API.
+## Documentation
 
----
+- [Woosmap API Docs](https://developers.woosmap.com/)
+- [MCP Protocol](https://modelcontextprotocol.io/)
+- [Claude Skills Guide](https://docs.anthropic.com/)
 
-### Environment Variables
-|Variable| Description|
-|---|---|
-|WOOSMAP_API_KEY|Your Woosmap API key|
-|MCP_DEBUG|Enables MCP debug logging|
-|PYTHONUNBUFFERED|Ensures logs are flushed immediately|
+## License
 
-### Debugging & Logs
+See LICENSE file for details.
 
-#### Claude MCP logs
-```bash
-tail -f ~/Library/Logs/Claude/mcp.log
-```
+## Contributing
 
-#### Standalone test (recommended)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-Before using Claude, verify the MCP runs correctly:
-```sh
-uv sync
-uv run main.py
-```
+## Support
 
-If this fails, Claude will not be able to load the MCP.
-
-⸻
-
-### Troubleshooting
-- Tool not available in Claude
-- Check claude_desktop_config.json syntax
-- Ensure the MCP name matches exactly (WoosmapMcp)
-- Restart Claude Desktop
-- No results returned
-- Verify WOOSMAP_API_KEY is valid
-- Check API quotas and permissions
-- Claude hangs
-- Ensure no print() statements are used
-- Logs must go to stderr, not stdout
-
----
-
-### License
-
-MIT
-
----
-
-### Contributing
-
-Contributions, bug reports, and feature requests are welcome.
-Please open an issue or submit a pull request.
+For issues:
+- **MCP Server**: Check `woosmap/` documentation
+- **Skill**: Check `woosmap-skill/` documentation
+- **Woosmap API**: Visit https://developers.woosmap.com/support
