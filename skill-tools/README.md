@@ -12,7 +12,7 @@ This directory contains scripts for creating and packaging Claude skills.
 ### Creating a New Skill
 
 ```bash
-cd /Volumes/livestuff/claude
+cd /Volumes/livestuff/claude/claude_woosmap
 python3 skill-tools/init_skill.py <skill-name> --path .
 ```
 
@@ -35,7 +35,7 @@ my-new-skill/
 After developing your skill, package it for distribution:
 
 ```bash
-cd /Volumes/livestuff/claude
+cd /Volumes/livestuff/claude/claude_woosmap
 python3 skill-tools/package_skill.py <skill-folder> <output-directory>
 ```
 
@@ -54,11 +54,11 @@ This will:
 If you edit `woosmap-skill/SKILL.md`, re-package it with:
 
 ```bash
-cd /Volumes/livestuff/claude
+cd /Volumes/livestuff/claude/claude_woosmap
 python3 skill-tools/package_skill.py woosmap-skill skills-dist
 ```
 
-The updated `skills-dist/woosmap.skill` will be created.
+The updated `skills-dist/woosmap-skill.skill` will be created.
 
 ## Requirements
 
