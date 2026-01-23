@@ -7,6 +7,75 @@ description: Geolocation and mapping services using the Woosmap API. Use this sk
 
 This skill provides guidance for using Woosmap API tools to handle location-based queries, address lookups, routing, and navigation tasks.
 
+## Setup Requirements
+
+This skill requires the Woosmap MCP server to be installed and configured. The MCP server is included in this skill's `scripts/` directory.
+
+### For Claude Desktop (Local Use)
+
+#### Installation Steps
+
+1. **Install dependencies:**
+   ```bash
+   cd <skill-location>/scripts/
+   pip install -e . --break-system-packages
+   ```
+   Or use uv:
+   ```bash
+   uv sync
+   ```
+
+2. **Get a Woosmap API key:**
+   - Sign up at [Woosmap Console](https://console.woosmap.com/)
+   - Create a project and generate an API key
+
+3. **Configure Claude Desktop:**
+   
+   Edit your Claude Desktop configuration file:
+   - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+   
+   Add the Woosmap MCP server:
+   ```json
+   {
+     "mcpServers": {
+       "woosmap": {
+         "command": "python",
+         "args": ["-m", "main"],
+         "cwd": "<path-to-skill>/scripts/",
+         "env": {
+           "WOOSMAP_API_KEY": "your-api-key-here"
+         }
+       }
+     }
+   }
+   ```
+
+4. **Restart Claude Desktop** for changes to take effect
+
+### For Web Claude (claude.ai)
+
+Web Claude requires the MCP server to be hosted remotely. Two options:
+
+#### Option 1: Deploy to Railway.app (Easiest)
+
+1. Extract the `scripts/` folder from the skill
+2. Deploy to [Railway.app](https://railway.app)
+3. Set `WOOSMAP_API_KEY` environment variable
+4. Connect to web Claude using the Railway URL
+
+**See included deployment guides for detailed instructions.**
+
+#### Option 2: Use Claude Desktop
+
+For personal use, Claude Desktop is simpler as it runs the MCP server locally without needing to deploy to a hosting service.
+
+### Verification
+
+After restarting, you can verify the skill is working by asking:
+- "Find coffee shops near me"
+- "What's the distance from Paris to London?"
+
 ## Core Capabilities
 
 ### 1. Place Search & Autocomplete
