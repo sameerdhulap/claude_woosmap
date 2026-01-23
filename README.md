@@ -56,7 +56,9 @@ Contains packaged `.skill` files ready for distribution to end users.
 1. **Set up the MCP server**:
    ```bash
    cd woosmap
-   pip install -r requirements.txt or uv sync
+   pip install -r requirements.txt
+   # or using uv:
+   uv sync
    # Configure your Woosmap API key
    ```
 
@@ -102,7 +104,7 @@ Claude formats response for user
 
 - **Python 3.8+** for MCP server
 - **Woosmap API Key** (get from https://developers.woosmap.com/)
-- **Claude** (Sonnet 4.5 or later recommended)
+- **Claude** (Sonnet 4 or later recommended)
 - **MCP-compatible Claude interface** (Claude.ai, API, etc.)
 
 ## Development Workflow
