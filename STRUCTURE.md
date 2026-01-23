@@ -1,81 +1,77 @@
 # Woosmap Project Structure
 
 ```
-/******/claude/
+claude_woosmap/
+├── README.md                     # Main project documentation
+├── STRUCTURE.md                  # This file
+├── .gitignore
 │
-├── README.md                           # Main project documentation
+├── skill-tools/                  # Skill Management Utilities
+│   ├── init_skill.py             # Initialize new skills
+│   ├── package_skill.py          # Package skills for distribution
+│   └── README.md
 │
-├── woosmap/                           # MCP Server (your existing folder)
-│   ├── server.py                      # MCP server implementation
-│   ├── mcp_config.json                # MCP configuration
-│   ├── requirements.txt               # Python dependencies
-│   └── ...                            # Other server files
+├── skills-dist/                  # Distribution
+│   ├── woosmap-skill.skill       # Packaged skill (zip archive)
+│   ├── INSTALLATION_GUIDE.md     # User installation guide
+│   └── README.md
 │
-├── woosmap-skill/                     # Skill Development (NEWLY CREATED)
-│   ├── SKILL.md                       # Main skill file for Claude
-│   └── README.md                      # Development guide
-│
-└── skills-dist/                       # Distribution (NEWLY CREATED)
-    ├── woosmap.skill                  # Packaged skill (zip archive)
-    └── README.md                      # Installation guide
+└── woosmap-skill/                # Skill Development
+    ├── SKILL.md                  # Main skill instructions for Claude
+    ├── README.md
+    └── scripts/                  # MCP Server
+        ├── server.py             # MCP server entry point
+        ├── main.py               # Main module
+        ├── core.py               # Core utilities
+        ├── localities.py         # Places/localities API
+        ├── distance.py           # Distance matrix API
+        ├── transit.py            # Transit routing API
+        ├── exceptions.py         # Custom exceptions
+        ├── requirements.txt      # Python dependencies
+        ├── pyproject.toml        # Project configuration
+        └── README.md
 ```
 
-## What Each Folder Does
+## Folder Overview
 
-### woosmap/ (MCP Server)
-- **Purpose**: The actual service that talks to Woosmap API
-- **Technology**: Python MCP server
-- **Used by**: Claude (via MCP protocol)
-- **Contains**: API client code, server logic, configuration
+| Folder | Purpose | Editable |
+|--------|---------|----------|
+| `skill-tools/` | Python utilities to create and package skills | Yes |
+| `skills-dist/` | Packaged `.skill` files for distribution | No (generated) |
+| `woosmap-skill/` | Skill instructions + MCP server source code | Yes |
 
-### woosmap-skill/ (Development)
-- **Purpose**: Teaches Claude how to use the MCP tools
-- **Technology**: Markdown documentation
-- **Used by**: Claude (reads SKILL.md for guidance)
-- **Contains**: Instructions, workflows, best practices, examples
-- **Editable**: Yes - modify SKILL.md to update skill behavior
-
-### skills-dist/ (Distribution)
-- **Purpose**: Distributable packages for end users
-- **Technology**: .skill files (zip archives)
-- **Used by**: End users installing the skill
-- **Contains**: Packaged versions of woosmap-skill/
-- **Editable**: No - generated from woosmap-skill/
-
-## Workflow
+## How It Works
 
 ```
-1. DEVELOP
-   Edit: woosmap-skill/SKILL.md
-   Test: Use Claude with the MCP server
-
-2. PACKAGE
-   Run: package_skill.py woosmap-skill skills-dist
-   Output: skills-dist/woosmap.skill
-
-3. DISTRIBUTE
-   Share: skills-dist/woosmap.skill
-   Install: Users extract to their skills folder
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  woosmap-skill/ │     │     Claude      │     │    scripts/     │
+│    (SKILL.md)   │────▶│                 │────▶│  (MCP Server)   │
+│   "Knowledge"   │     │   Orchestrates  │     │    "Tools"      │
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+                                                         ▼
+                                                ┌─────────────────┐
+                                                │   Woosmap API   │
+                                                └─────────────────┘
 ```
 
-## Key Relationships
+- **SKILL.md** = Knowledge (when and how to use the tools)
+- **scripts/** = MCP Server (functions that call the Woosmap API)
 
-```
-MCP Server ←→ Claude ←→ Skill Instructions
-(woosmap/)              (woosmap-skill/)
-    ↓                         ↓
-    ↓                   Packaged into
-    ↓                         ↓
-Woosmap API           skills-dist/woosmap.skill
-```
+## Development Workflow
 
-The MCP server provides the TOOLS (functions).
-The skill provides the KNOWLEDGE (when/how to use them).
+1. **Develop** - Edit `woosmap-skill/SKILL.md` and `woosmap-skill/scripts/`
+2. **Test** - Run the MCP server and test with Claude
+3. **Package** - Run `python skill-tools/package_skill.py woosmap-skill skills-dist`
+4. **Distribute** - Share `skills-dist/woosmap-skill.skill`
 
+## MCP Server Modules
 
-## Next Steps
-
-1. Review the README files in each folder
-2. Test the skill with Claude
-3. Customize SKILL.md if needed
-4. Package and distribute to users
+| Module | Description |
+|--------|-------------|
+| `server.py` | MCP server setup and entry point |
+| `localities.py` | Place search, autocomplete, geocoding |
+| `distance.py` | Distance matrix calculations |
+| `transit.py` | Public transit routing |
+| `core.py` | Shared utilities and helpers |
+| `exceptions.py` | Custom error handling |
